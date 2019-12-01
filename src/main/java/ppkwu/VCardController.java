@@ -6,6 +6,7 @@ import ezvcard.VCardVersion;
 import ezvcard.property.Revision;
 import ezvcard.property.StructuredName;
 import ezvcard.property.Uid;
+import org.apache.tomcat.util.http.fileupload.IOUtils;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -14,10 +15,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletResponse;
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -54,14 +54,25 @@ public class VCardController {
         }
     }
 
-    @GetMapping("/ppkwu/vcard/{employeeId}")
-    @ResponseBody
-    public ResponseEntity<?> getEmployeeProfile(@PathVariable int employeeId) throws IOException {
+    @RequestMapping(value = "/ppkwu/vcard/{employeeId}", method = RequestMethod.GET)
+    public void getEmployeeProfile(@PathVariable("employeeId") int employeeId, HttpServletResponse response) throws IOException {
         StringBuilder urlAddress = new StringBuilder(WEEIA_PROFILE_ENDPOINT)
                 .append(employeeId);
         String weeiaPage = fetchDocFile(urlAddress.toString());
 
         Employee employee = fetchEmployeeData(weeiaPage);
+        VCard vcard = createVCard(employee);
+
+        File file = new File("employee.vcf");
+        Ezvcard.write(vcard).go(file);
+        InputStream myStream = new FileInputStream(file);
+
+        org.apache.commons.io.IOUtils.copy(myStream, response.getOutputStream());
+        response.addHeader("Content-disposition", "attachment;filename=employee.vcf");
+        response.setContentType("application/vcf");
+    }
+
+    private VCard createVCard(Employee employee) {
         VCard vcard = new VCard();
         StructuredName n = new StructuredName();
         n.setFamily(employee.getLastName());
@@ -72,23 +83,7 @@ public class VCardController {
 
         vcard.setUid(Uid.random());
         vcard.setRevision(Revision.now());
-
-        return new ResponseEntity<>(Ezvcard.write(vcard).version(VCardVersion.V3_0).go(), HttpStatus.OK);
-//        File f=new File("contact.vcf");
-//        f.createNewFile();
-//        FileOutputStream fop=new FileOutputStream(f);
-//
-//        VCard vcard = new VCard();
-//
-//        Employee employee = new Employee();
-//        n.setFamily("Doe");
-//        n.setGiven("Jonathan");
-//        n.getPrefixes().add("Mr");
-//        vcard.setStructuredName(n);
-//
-//        vcard.setFormattedName("John Doe");
-//
-//        Ezvcard.write(vcard).version(VCardVersion.V4_0).go(System.out);
+        return vcard;
     }
 
     private Employee fetchEmployeeData(String weeiaPage) {
