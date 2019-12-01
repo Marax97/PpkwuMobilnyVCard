@@ -2,7 +2,10 @@ package ppkwu;
 
 import ezvcard.Ezvcard;
 import ezvcard.VCard;
+import ezvcard.VCardVersion;
+import ezvcard.property.Revision;
 import ezvcard.property.StructuredName;
+import ezvcard.property.Uid;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -39,9 +42,9 @@ public class VCardController {
 
             Elements userProfiles = filterByRegex(weeiaPage, "div.user-info");
             userProfiles.forEach(user -> {
-                user.select(".btn").remove();
                 String profileLink = user.select("a").attr("href");
                 String employeeId = profileLink.substring(profileLink.lastIndexOf("id=") + 3);
+                user.select(".btn").remove();
                 user.append("<button type=\"button\" onclick= \" window.location.href ='/ppkwu/vcard/" + employeeId + "'\">wygeneruj vCard</button>");
             });
 
@@ -59,8 +62,18 @@ public class VCardController {
         String weeiaPage = fetchDocFile(urlAddress.toString());
 
         Employee employee = fetchEmployeeData(weeiaPage);
+        VCard vcard = new VCard();
+        StructuredName n = new StructuredName();
+        n.setFamily(employee.getLastName());
+        n.setGiven(employee.getFirstName());
+        vcard.setStructuredName(n);
 
-        return new ResponseEntity<>(employee, HttpStatus.OK);
+        vcard.setFormattedName(employee.getFirstName() + " " + employee.getLastName());
+
+        vcard.setUid(Uid.random());
+        vcard.setRevision(Revision.now());
+
+        return new ResponseEntity<>(Ezvcard.write(vcard).version(VCardVersion.V3_0).go(), HttpStatus.OK);
 //        File f=new File("contact.vcf");
 //        f.createNewFile();
 //        FileOutputStream fop=new FileOutputStream(f);
@@ -84,6 +97,9 @@ public class VCardController {
         String[] splited = profileName.text().split(" ");
         employee.setFirstName(splited[0]);
         employee.setLastName(splited[1]);
+
+//        Elements profileEmail = filterByRegex(weeiaPage, "div.profile-container > ul > li.email");
+//        employee.setEmail(profileEmail.text());
 
         return employee;
     }
