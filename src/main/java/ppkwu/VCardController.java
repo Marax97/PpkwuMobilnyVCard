@@ -31,9 +31,25 @@ public class VCardController {
     private static final String WEEIA_EMPLOYEE_ENDPOINT = "https://adm.edu.p.lodz.pl/user/users.php?search=";
     private static final String WEEIA_PROFILE_ENDPOINT = "https://adm.edu.p.lodz.pl/user/profile.php?id=";
 
+    @GetMapping("/ppkwu")
+    @ResponseBody
+    public String getWeeiaEmployees() {
+        return "<body style=\"text-align:center;\">  \n" +
+                "<form onSubmit=\"return find();\">\n" +
+                " Name: <input type=\"text\" id=\"employee\"><br>\n" +
+                "  <input type=\"submit\" value=\"Submit\">\n" +
+                "</form>" +
+                "    <script>  \n" +
+                "        function find() { \n " +
+                "            var txt = document.getElementById('employee').value; \n" +
+                "            location = '/ppkwu/search/' + txt;\n}" +
+                "    </script> " +
+                "</body>  \n";
+    }
+
     @GetMapping("/ppkwu/search/{employee}")
     @ResponseBody
-    public ResponseEntity<?> getWeeiaEmployees(@PathVariable String employee) {
+    public ResponseEntity<?> form(@PathVariable String employee) {
         try {
             StringBuilder urlAddress = new StringBuilder(WEEIA_EMPLOYEE_ENDPOINT)
                     .append(employee)
