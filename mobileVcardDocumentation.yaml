@@ -1,0 +1,68 @@
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: Mobile VCard
+  description: Find employee by name and download vcard with his first and last name
+  termsOfService: http://swagger.io/terms/
+  contact:
+    name: Maciej Kopka
+    email: 209360@edu.p.lodz.pl
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.html
+paths:
+  /ppkwu/search/{username}:
+    get:
+      description: |
+        Return page with all employees of Politechnika Łódzka matching the requested username.
+      operationId: getWeeiaEmployees
+      parameters:
+        - name: username
+          in: path
+          description: employee name
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 'Html page with finded employees'
+          content:
+            text/html:
+              schema:
+                type: string
+                example: HTML page
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                type: string
+                example: unexpected error
+  /ppkwu/vcard/{employeeId}:
+    get:
+      description: |
+        Download employee first and last name as vcard file.
+      operationId: getEmployeeProfile
+      parameters:
+        - name: employeeId
+          in: path
+          description: employee id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 'Download vcf file with employee data'
+          content:
+            text/html:
+              schema:
+                type: object
+                example: employee.vcf
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                type: string
+                example: unexpected error
+
